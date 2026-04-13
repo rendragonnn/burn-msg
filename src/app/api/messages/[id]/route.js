@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
 
 
   if (msg.telegramId) {
-    sendTelegramNotification(msg.telegramId, request, id);
+    await sendTelegramNotification(msg.telegramId, request, id);
   }
 
   return NextResponse.json(response);

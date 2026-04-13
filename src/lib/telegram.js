@@ -11,7 +11,7 @@ export async function sendTelegramNotification(telegramId, req, msgId) {
 
     const text = `🚨 <b>[GHOST PROTOCOL] PAYLOAD DESTROYED</b> 🚨\n\nPesan rahasia Anda baru saja dibaca dan telah dihancurkan total dari server.\n\n📇 <b>ID Pesan</b> ㅤ : <code>${msgId}</code>\n🔴 <b>Status</b> ㅤ ㅤ : <i>Permanently Burned</i>\n🕒 <b>Waktu</b> ㅤ ㅤ: <code>${dateStr}</code>\n🎯 <b>Target IP</b> ㅤ : <code>${ip}</code>\n📱 <b>Perangkat</b> ㅤ: <code>${userAgent}</code>\n\n<i>No further traces exist. This channel is now closed.</i>`;
 
-    fetch(telegramUrl, {
+    await fetch(telegramUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

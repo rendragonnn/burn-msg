@@ -53,7 +53,7 @@ export async function POST(request, { params }) {
 
 
   if (msg.telegramId) {
-    sendTelegramNotification(msg.telegramId, request, id);
+    await sendTelegramNotification(msg.telegramId, request, id);
   }
 
   return NextResponse.json(response);
