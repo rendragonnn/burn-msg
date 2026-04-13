@@ -66,7 +66,7 @@ export async function POST(request) {
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to create message' },
+      { error: error.message },
       { status: 500 }
     );
   }
