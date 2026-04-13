@@ -6,7 +6,7 @@ import { EXPIRY_OPTIONS, BURN_TIME_OPTIONS, ID_LENGTH, MAX_PAYLOAD_SIZE } from '
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { ciphertext, iv, passwordHash, expiresIn, burnTime, maxReads, audio } = body;
+    const { ciphertext, iv, passwordHash, expiresIn, burnTime, maxReads, audio, telegramId } = body;
 
     if (!ciphertext || !iv) {
       return NextResponse.json(
@@ -59,7 +59,8 @@ export async function POST(request) {
       expiresAt,
       burnTime: finalBurnTime,
       maxReads: finalMaxReads,
-      audio: audio || null
+      audio: audio || null,
+      telegramId: telegramId || null
     });
 
     return NextResponse.json({ id }, { status: 201 });

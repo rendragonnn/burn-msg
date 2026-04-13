@@ -3,7 +3,7 @@ import { Redis } from '@upstash/redis';
 // Initialize Redis client. This requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars.
 const redis = Redis.fromEnv();
 
-export async function createMessage({ id, ciphertext, iv, hasPassword, passwordHash, expiresAt, burnTime, maxReads = 1, audio = null }) {
+export async function createMessage({ id, ciphertext, iv, hasPassword, passwordHash, expiresAt, burnTime, maxReads = 1, audio = null, telegramId = null }) {
   const msgObj = {
     ciphertext,
     iv,
@@ -13,6 +13,7 @@ export async function createMessage({ id, ciphertext, iv, hasPassword, passwordH
     burnTime,
     maxReads,
     audio,
+    telegramId,
     reads: 0,
     burned: false,
     createdAt: Date.now(),

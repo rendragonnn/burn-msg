@@ -11,6 +11,8 @@ export default function MessageForm() {
   const [message, setMessage] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [telegramId, setTelegramId] = useState('');
+  const [showTelegram, setShowTelegram] = useState(false);
   const [expiresIn, setExpiresIn] = useState('24h');
   const [customExpiry, setCustomExpiry] = useState('');
   const [customExpiryUnit, setCustomExpiryUnit] = useState('m');
@@ -179,7 +181,15 @@ export default function MessageForm() {
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ciphertext, iv, passwordHash, expiresIn: finalExpiry, burnTime: finalBurn, maxReads: finalMaxReadsValue }),
+        body: JSON.stringify({ 
+          ciphertext, 
+          iv, 
+          passwordHash, 
+          expiresIn: finalExpiry, 
+          burnTime: finalBurn, 
+          maxReads: finalMaxReadsValue,
+          telegramId: (showTelegram && telegramId.trim()) ? telegramId.trim() : null
+        }),
       });
 
       if (!res.ok) {
@@ -468,6 +478,38 @@ export default function MessageForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Recipient must enter this password"
+            disabled={loading}
+          />
+        </div>
+      )}
+
+      <div className={styles.field} style={{ marginTop: '10px' }}>
+        <button
+          type="button"
+          className={`${styles.togglePassword} ${showTelegram ? styles.toggleActive : ''}`}
+          onClick={() => setShowTelegram(!showTelegram)}
+          disabled={loading}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2 11 13"/>
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+          </svg>
+          {showTelegram ? 'Remove Telegram Notif' : 'Add Telegram Notif'}
+        </button>
+      </div>
+
+      {showTelegram && (
+        <div className={styles.field}>
+          <label htmlFor="telegramId" className={styles.label}>
+            Telegram Chat ID
+          </label>
+          <input
+            id="telegramId"
+            type="text"
+            className={styles.input}
+            value={telegramId}
+            onChange={(e) => setTelegramId(e.target.value)}
+            placeholder="Get your ID via @userinfobot"
             disabled={loading}
           />
         </div>

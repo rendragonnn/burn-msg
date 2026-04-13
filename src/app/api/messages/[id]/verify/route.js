@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getMessage, readMessage } from '@/lib/store';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function POST(request, { params }) {
   const { id } = await params;
@@ -49,6 +50,11 @@ export async function POST(request, { params }) {
 
   response.currentRead = currentReadCount;
   response.maxReads = msg.maxReads;
+
+
+  if (msg.telegramId) {
+    sendTelegramNotification(msg.telegramId, request, id);
+  }
 
   return NextResponse.json(response);
 }
