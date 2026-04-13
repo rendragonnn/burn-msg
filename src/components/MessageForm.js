@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { generateKey, encrypt } from '@/lib/crypto';
 import { EXPIRY_OPTIONS, BURN_TIME_OPTIONS, MAX_MESSAGE_LENGTH, MAX_FILE_SIZE } from '@/lib/constants';
@@ -32,6 +32,16 @@ export default function MessageForm() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
+
+  // KILL SWITCH: Force close microphone hardware channel & timers when user navigates away
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
