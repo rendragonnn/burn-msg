@@ -34,20 +34,16 @@ export async function getMessage(id) {
   return msg;
 }
 
-export async function readMessage(id) {
-  const msg = await redis.hgetall(`msg:${id}`);
-  if (!msg || Object.keys(msg).length === 0) return false;
-  
-  if (msg.burned || msg.expiresAt <= Date.now()) {
-    if (msg.expiresAt <= Date.now()) await redis.del(`msg:${id}`);
-    return false;
-  }
-  
-  // Atomically increment read count
+export async function claimMessageRead(id, maxReads) {
+  // Atomically increment read count FIRST to prevent TOCTOU race conditions
   const newReads = await redis.hincrby(`msg:${id}`, 'reads', 1);
   
-  if (newReads >= msg.maxReads) {
-    // Burn the payload
+  if (newReads > maxReads) {
+    return null; // Quota exceeded!
+  }
+  
+  if (newReads === maxReads) {
+    // Burn the payload immediately on the final read
     await redis.hset(`msg:${id}`, {
       burned: true,
       ciphertext: null,

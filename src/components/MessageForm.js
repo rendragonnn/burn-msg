@@ -45,7 +45,10 @@ export default function MessageForm() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+        
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         if (audioBlob.size > MAX_FILE_SIZE) {
           setFileError('Voice memo exceeds 3 MB limit');
           return;
@@ -54,8 +57,8 @@ export default function MessageForm() {
         const reader = new FileReader();
         reader.onload = (event) => {
           setAudio({
-            name: `Voice Memo (${recordingTime}s).webm`,
-            type: 'audio/webm',
+            name: `Voice Memo (${recordingTime}s).${ext}`,
+            type: mimeType,
             data: event.target.result,
             size: audioBlob.size,
             duration: recordingTime
@@ -464,6 +467,9 @@ export default function MessageForm() {
           </svg>
           {showPassword ? 'Remove password' : 'Add password'}
         </button>
+        {!showPassword && (
+          <span className={styles.hint} style={{ marginTop: '8px', display: 'block' }}>Require a secret password to decrypt this message</span>
+        )}
       </div>
 
       {showPassword && (
@@ -496,6 +502,9 @@ export default function MessageForm() {
           </svg>
           {showTelegram ? 'Remove Telegram Notif' : 'Add Telegram Notif'}
         </button>
+        {!showTelegram && (
+          <span className={styles.hint} style={{ marginTop: '8px', display: 'block' }}>Get an instant ping when target opens your message</span>
+        )}
       </div>
 
       {showTelegram && (

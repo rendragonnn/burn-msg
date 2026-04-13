@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMessage, readMessage } from '@/lib/store';
+import { getMessage, claimMessageRead } from '@/lib/store';
 import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function GET(request, { params }) {
@@ -36,7 +36,15 @@ export async function GET(request, { params }) {
     createdAt: msg.createdAt,
   };
 
-  const currentReadCount = await readMessage(id);
+  const currentReadCount = await claimMessageRead(id, msg.maxReads);
+  
+  if (currentReadCount === null) {
+    const peopleStr = msg.maxReads === 1 ? '1 person' : `${msg.maxReads} people`;
+    return NextResponse.json(
+      { error: `Too late, the message was already burned by ${peopleStr}` },
+      { status: 410 }
+    );
+  }
 
   response.currentRead = currentReadCount;
   response.maxReads = msg.maxReads;
