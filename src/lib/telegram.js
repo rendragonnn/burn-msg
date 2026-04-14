@@ -17,10 +17,28 @@ export async function sendTelegramNotification(telegramId, req, msgId) {
       deviceName = req.headers.get('user-agent') || 'Unknown Device';
     }
     
-    // Formatting date neatly
-    const dateStr = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
+    // Formatting date neatly to WIB (Asia/Jakarta)
+    const dateStr = new Date().toLocaleString('id-ID', { 
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
 
-    const text = `<b>Message Burned</b>\n\n<b>ID:</b> <code>${msgId}</code>\n<b>Time:</b> ${dateStr}\n<b>IP:</b> <code>${ip}</code>\n<b>Device:</b> <code>${deviceName}</code>`;
+    // Detect location using Vercel IP headers (Available in Vercel Deployments)
+    const city = req.headers.get('x-vercel-ip-city');
+    const country = req.headers.get('x-vercel-ip-country');
+    const location = city && country ? `${city}, ${country}` : '';
+
+    let text = `<b>Message Burned</b>\n\n<b>ID:</b> <code>${msgId}</code>\n<b>Time:</b> ${dateStr}\n<b>IP:</b> <code>${ip}</code>`;
+    if (location) {
+      text += `\n<b>Location:</b> <code>${location}</code>`;
+    }
+    text += `\n<b>Device:</b> <code>${deviceName}</code>`;
 
     await fetch(telegramUrl, {
       method: 'POST',
