@@ -18,6 +18,7 @@ export default function ReadMessage() {
   const [currentRead, setCurrentRead] = useState(1);
   const [audio, setAudio] = useState(null);
   const [error, setError] = useState('');
+  const [passwordSalt, setPasswordSalt] = useState(null);
 
   const decryptAndReveal = useCallback(async (data) => {
     try {
@@ -74,6 +75,7 @@ export default function ReadMessage() {
         }
         const data = await res.json();
         if (data.hasPassword) {
+          if (data.passwordSalt) setPasswordSalt(data.passwordSalt);
           setState('password');
           return;
         }
@@ -105,20 +107,6 @@ export default function ReadMessage() {
       </div>
     );
   }
-
-  const [passwordSalt, setPasswordSalt] = useState(null);
-
-  // passwordSalt is extracted from the GET response when hasPassword=true
-  useEffect(() => {
-    if (state === 'password') {
-      fetch(`/api/messages/${params.id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.passwordSalt) setPasswordSalt(data.passwordSalt);
-        })
-        .catch(() => {});
-    }
-  }, [state, params.id]);
 
   if (state === 'password') {
     return (
