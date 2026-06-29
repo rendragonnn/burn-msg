@@ -76,8 +76,9 @@ export async function POST(request) {
 
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
+    console.error('[POST /api/messages] Error:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: error.message, stack: error.stack },
       { status: 500 }
     );
   }
