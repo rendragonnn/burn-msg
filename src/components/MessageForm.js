@@ -218,13 +218,21 @@ export default function MessageForm() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create message');
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const data = await res.clone().json();
+          errMsg = data.error || data.stack || errMsg;
+        } catch {
+          const text = await res.clone().text();
+          errMsg = text || errMsg;
+        }
+        throw new Error(errMsg);
       }
 
       const { id } = await res.json();
       router.push(`/created/${id}#${key}`);
     } catch (err) {
+      console.error('[CreateMsg]', err);
       setError(err.message);
     } finally {
       setLoading(false);
