@@ -1,0 +1,40 @@
+.counter {
+  text-align: center;
+  padding: var(--space-12) 0;
+}
+
+.counterInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-10);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(220, 38, 38, 0.05);
+}
+
+.fireIcon {
+  color: var(--accent);
+  animation: flicker 2s ease-in-out infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--warning) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}

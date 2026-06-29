@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { createMessage } from '@/lib/store';
-import { EXPIRY_OPTIONS, BURN_TIME_OPTIONS, ID_LENGTH, MAX_PAYLOAD_SIZE } from '@/lib/constants';
+import { EXPIRY_OPTIONS, ID_LENGTH, MAX_PAYLOAD_SIZE } from '@/lib/constants';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const { allowed, retryAfter } = rateLimit(ip, 20, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many requests. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { ciphertext, iv, passwordHash, expiresIn, burnTime, maxReads, audio, telegramId } = body;
@@ -56,6 +66,7 @@ export async function POST(request) {
       iv,
       hasPassword: !!passwordHash,
       passwordHash: passwordHash || null,
+      passwordSalt: body.passwordSalt || null,
       expiresAt,
       burnTime: finalBurnTime,
       maxReads: finalMaxReads,

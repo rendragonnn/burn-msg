@@ -32,6 +32,7 @@ export default function MessageForm() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
+  const recordingTimeRef = useRef(0);
 
   // KILL SWITCH: Force close microphone hardware channel & timers when user navigates away
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function MessageForm() {
       mediaRecorder.onstop = () => {
         const mimeType = mediaRecorder.mimeType || 'audio/webm';
         const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const duration = recordingTimeRef.current;
         
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         if (audioBlob.size > MAX_FILE_SIZE) {
@@ -67,11 +69,11 @@ export default function MessageForm() {
         const reader = new FileReader();
         reader.onload = (event) => {
           setAudio({
-            name: `Voice Memo (${recordingTime}s).${ext}`,
+            name: `Voice Memo (${duration}s).${ext}`,
             type: mimeType,
             data: event.target.result,
             size: audioBlob.size,
-            duration: recordingTime
+            duration
           });
         };
         reader.readAsDataURL(audioBlob);
@@ -81,15 +83,18 @@ export default function MessageForm() {
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      recordingTimeRef.current = 0;
       setFile(null); // Mutually exclusive
       
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => {
-          if (prev >= 120) {
+          const next = prev + 1;
+          recordingTimeRef.current = next;
+          if (next > 120) {
             stopRecording();
             return 120;
           }
-          return prev + 1;
+          return next;
         });
       }, 1000);
 
@@ -135,10 +140,13 @@ export default function MessageForm() {
   }
 
   async function hashPassword(pwd) {
-    const encoded = new TextEncoder().encode(pwd);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const encoded = new TextEncoder().encode(saltHex + pwd);
     const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return { passwordHash, passwordSalt: saltHex };
   }
 
   function getExpiryValue() {
@@ -183,8 +191,11 @@ export default function MessageForm() {
       const { ciphertext, iv } = await encrypt(payloadString, key);
 
       let passwordHash = null;
+      let passwordSalt = null;
       if (showPassword && password.trim()) {
-        passwordHash = await hashPassword(password);
+        const result = await hashPassword(password);
+        passwordHash = result.passwordHash;
+        passwordSalt = result.passwordSalt;
       }
 
       const finalExpiry = getExpiryValue();
@@ -198,6 +209,7 @@ export default function MessageForm() {
           ciphertext, 
           iv, 
           passwordHash, 
+          passwordSalt,
           expiresIn: finalExpiry, 
           burnTime: finalBurn, 
           maxReads: finalMaxReadsValue,

@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getMessage, claimMessageRead } from '@/lib/store';
 import { sendTelegramNotification } from '@/lib/telegram';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function GET(request, { params }) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const { allowed, retryAfter } = rateLimit(ip, 30, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many requests. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+    );
+  }
+
   const { id } = await params;
   const msg = await getMessage(id);
 
@@ -24,6 +34,7 @@ export async function GET(request, { params }) {
   if (msg.hasPassword) {
     return NextResponse.json({
       hasPassword: true,
+      passwordSalt: msg.passwordSalt,
       createdAt: msg.createdAt,
     });
   }

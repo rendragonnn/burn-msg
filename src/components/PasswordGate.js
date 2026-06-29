@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import styles from './PasswordGate.module.css';
 
-export default function PasswordGate({ messageId, onUnlock, onGone }) {
+export default function PasswordGate({ messageId, passwordSalt, onUnlock, onGone }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function hashPassword(pwd) {
-    const encoded = new TextEncoder().encode(pwd);
+    const salt = passwordSalt || '';
+    const encoded = new TextEncoder().encode(salt + pwd);
     const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');

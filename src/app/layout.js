@@ -1,4 +1,7 @@
 import './globals.css';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export const metadata = {
   title: 'BurnMsg — Send Self-Destructing Encrypted Messages',
@@ -16,11 +19,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <main className="container">
-          {children}
-        </main>
+        <ErrorBoundary>
+          <Navbar />
+          <div className="pageContent">
+            {children}
+          </div>
+          <Footer />
+        </ErrorBoundary>
       </body>
     </html>
   );

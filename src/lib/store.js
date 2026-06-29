@@ -3,12 +3,13 @@ import { Redis } from '@upstash/redis';
 // Initialize Redis client. This requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars.
 const redis = Redis.fromEnv();
 
-export async function createMessage({ id, ciphertext, iv, hasPassword, passwordHash, expiresAt, burnTime, maxReads = 1, audio = null, telegramId = null }) {
+export async function createMessage({ id, ciphertext, iv, hasPassword, passwordHash, passwordSalt, expiresAt, burnTime, maxReads = 1, audio = null, telegramId = null }) {
   const msgObj = {
     ciphertext,
     iv,
     hasPassword: !!hasPassword,
     passwordHash: passwordHash || null,
+    passwordSalt: passwordSalt || null,
     expiresAt,
     burnTime,
     maxReads,
@@ -31,6 +32,10 @@ export async function createMessage({ id, ciphertext, iv, hasPassword, passwordH
 export async function getMessage(id) {
   const msg = await redis.hgetall(`msg:${id}`);
   if (!msg || Object.keys(msg).length === 0) return null;
+  if (msg.expiresAt <= Date.now()) {
+    await redis.del(`msg:${id}`);
+    return null;
+  }
   return msg;
 }
 
@@ -55,14 +60,4 @@ export async function claimMessageRead(id, maxReads) {
   return newReads;
 }
 
-export async function messageExists(id) {
-  const exists = await redis.exists(`msg:${id}`);
-  if (!exists) return false;
-  
-  const msg = await redis.hgetall(`msg:${id}`);
-  if (msg.expiresAt <= Date.now()) {
-    await redis.del(`msg:${id}`);
-    return false;
-  }
-  return true;
-}
+// messageExists removed — getMessage handles expiration checks internally

@@ -17,7 +17,6 @@ export default function ReadMessage() {
   const [maxReads, setMaxReads] = useState(1);
   const [currentRead, setCurrentRead] = useState(1);
   const [audio, setAudio] = useState(null);
-  const [isRevealed, setIsRevealed] = useState(true);
   const [error, setError] = useState('');
 
   const decryptAndReveal = useCallback(async (data) => {
@@ -48,7 +47,6 @@ export default function ReadMessage() {
       setBurnTime(data.burnTime ?? 30);
       setCurrentRead(data.currentRead || 1);
       setMaxReads(data.maxReads || 1);
-      setIsRevealed(true);
       setState('revealed');
     } catch {
       setState('gone');
@@ -108,11 +106,26 @@ export default function ReadMessage() {
     );
   }
 
+  const [passwordSalt, setPasswordSalt] = useState(null);
+
+  // passwordSalt is extracted from the GET response when hasPassword=true
+  useEffect(() => {
+    if (state === 'password') {
+      fetch(`/api/messages/${params.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.passwordSalt) setPasswordSalt(data.passwordSalt);
+        })
+        .catch(() => {});
+    }
+  }, [state, params.id]);
+
   if (state === 'password') {
     return (
       <div className={styles.page}>
         <PasswordGate
           messageId={params.id}
+          passwordSalt={passwordSalt}
           onUnlock={(data) => decryptAndReveal(data)}
           onGone={(errorMsg) => {
             setError(errorMsg);

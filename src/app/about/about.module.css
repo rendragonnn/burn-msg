@@ -1,0 +1,141 @@
+.aboutPage {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-12) 0 var(--space-8);
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: var(--space-16);
+}
+
+.hero h1 {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-4);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.section {
+  margin-bottom: var(--space-16);
+}
+
+.section h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: var(--space-5);
+}
+
+.section p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: var(--space-4);
+}
+
+.encryptionFlow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}
+
+.flowStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 100px;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.flowStep:hover {
+  border-color: var(--border-subtle);
+  transform: translateY(-2px);
+}
+
+.flowStep svg {
+  color: var(--accent);
+}
+
+.flowStep span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.flowArrow {
+  color: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.openSourceCard {
+  padding: var(--space-8);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.openSourceCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--text-primary);
+}
+
+.openSourceCard p {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-6);
+}
+
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.githubLink:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .encryptionFlow {
+    flex-direction: column;
+  }
+  
+  .flowArrow {
+    transform: rotate(90deg);
+  }
+}
