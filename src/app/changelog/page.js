@@ -8,9 +8,23 @@ export const metadata = {
 
 const entries = [
   {
+    version: 'v2.5',
+    date: 'July 2026',
+    latest: true,
+    features: [
+      { tag: 'security', text: 'Upgraded password hashing to PBKDF2 with 100,000 iterations' },
+      { tag: 'security', text: 'Implemented brute-force lockout that auto-burns message after 5 failed attempts' },
+      { tag: 'security', text: 'Fixed TOCTOU race conditions during message retrieval with atomic claims' },
+      { tag: 'security', text: 'Added timing-safe password hash comparisons (timing-attack protection)' },
+      { tag: 'security', text: 'Hardened CSP (removed unsafe-eval) and set strict no-referrer policy' },
+      { tag: 'improve', text: 'Self-hosted Google Fonts to prevent user tracking via CDN' },
+      { tag: 'improve', text: 'Pipelined rate limiting to reduce network latency and prevent lockouts' },
+      { tag: 'fix', text: 'Prevented stack trace leak on API errors' },
+    ],
+  },
+  {
     version: 'v2.4',
     date: 'April 2026',
-    latest: true,
     features: [
       { tag: 'security', text: 'Anti-Screenshot Mode with dynamic watermarking' },
       { tag: 'feature', text: 'Hold to Reveal — messages stay blurred until held' },
