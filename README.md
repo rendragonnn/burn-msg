@@ -1,13 +1,10 @@
-# 🔒 BurnMsg
+# BurnMsg
 
-> **Zero-Knowledge, Ephemeral Messaging Platform**  
-> Encrypt text, voice memos, and files entirely in-browser. Sent to the edge, destroyed instantly after reading.
-
-BurnMsg is built with a strict **Zero-Knowledge Architecture**. The server only acts as a blind relay. Content is encrypted client-side using **AES-256-GCM** before transmission, and the decryption key resides exclusively in the URL hash fragment—**meaning the server never sees the key, nor can it ever decrypt your data.**
+Zero-knowledge, ephemeral messaging platform. Text, voice memos, and files are encrypted client-side using AES-256-GCM before transmission. Decryption keys are confined to the URL hash fragment and never reach the network or server.
 
 ---
 
-## 🛠️ Cryptographic Architecture
+## Cryptographic Architecture
 
 ```mermaid
 sequenceDiagram
@@ -30,8 +27,8 @@ sequenceDiagram
     Note over Recipient: Decrypt Payload in-browser using URL #key
 ```
 
-### Specifications
-* **Encryption standard**: AES-256-GCM via the native Web Crypto API.
+### Technical Specifications
+* **Encryption standard**: AES-256-GCM via native Web Crypto API.
 * **Key Generation**: Cryptographically secure pseudo-random number generator (`crypto.getRandomValues()`).
 * **Zero-Knowledge Boundary**: The decryption key is passed via the URL hash fragment (`#key`). Because browsers do not transmit hash fragments in HTTP requests, the key never touches the network or the server.
 * **Password Hashing**: PBKDF2 with 100,000 iterations using HMAC-SHA-256, computed entirely client-side.
@@ -40,7 +37,7 @@ sequenceDiagram
 
 ---
 
-## ⚡ Technical Stack
+## Technical Stack
 
 * **Frontend & Routing**: Next.js 14+ (App Router)
 * **Ephemeral Store**: Upstash Redis (Global Serverless Edge Distribution)
@@ -50,7 +47,7 @@ sequenceDiagram
 
 ---
 
-## 🔒 Hardened Security Profile
+## Security Hardening
 
 * **Content Security Policy (CSP)**: Locked down with no `'unsafe-eval'` to eliminate XSS escalation vectors.
 * **Strict Privacy Headers**: `Referrer-Policy: no-referrer` prevents leakage of message IDs through third-party links.
@@ -59,46 +56,6 @@ sequenceDiagram
 
 ---
 
-## 🚀 Getting Started
+## License
 
-### Prerequisites
-* Node.js 18+
-* Upstash Redis database (or any Redis compatible instance)
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/rendragonnn/burn-msg.git
-   cd burn-msg
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Setup environment variables:
-   Create a `.env.local` file in the root directory:
-   ```env
-   UPSTASH_REDIS_REST_URL="your-upstash-redis-url"
-   UPSTASH_REDIS_REST_TOKEN="your-upstash-redis-token"
-   TELEGRAM_BOT_TOKEN="your-optional-telegram-bot-token"
-   ```
-
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Production Build
-```bash
-npm run build
-npm run start
-```
-
----
-
-## 📄 License
-
-MIT. Free for modification and redistribution under the terms of the MIT License.
+MIT
