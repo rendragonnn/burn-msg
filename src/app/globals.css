@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts loaded via next/font in layout.js — self-hosted, no external CDN */
 
 :root {
   --bg-primary: #09090b;
@@ -18,8 +18,8 @@
   --success-glow: rgba(34, 197, 94, 0.15);
   --warning: #f59e0b;
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-mono-jb), 'Fira Code', monospace;
 
   --space-1: 4px;
   --space-2: 8px;

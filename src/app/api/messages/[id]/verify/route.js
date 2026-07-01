@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getMessage, claimMessageRead } from '@/lib/store';
+import { getMessageMeta, getPasswordHash, claimMessageRead, recordFailedAttempt } from '@/lib/store';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { rateLimit } from '@/lib/rateLimit';
+import { timingSafeEqual as cryptoTimingSafeEqual } from 'crypto';
+
+/**
+ * Constant-time string comparison to prevent timing side-channel attacks.
+ */
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return cryptoTimingSafeEqual(bufA, bufB);
+}
 
 export async function POST(request, { params }) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const { allowed, retryAfter } = rateLimit(ip, 5, 60_000);
+  const { allowed, retryAfter } = await rateLimit(ip, 5, 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: `Too many requests. Try again in ${retryAfter}s.` },
@@ -14,17 +26,17 @@ export async function POST(request, { params }) {
   }
 
   const { id } = await params;
-  const msg = await getMessage(id);
+  const meta = await getMessageMeta(id);
 
-  if (!msg) {
+  if (!meta) {
     return NextResponse.json(
       { error: 'Message not found or already destroyed' },
       { status: 404 }
     );
   }
 
-  if (msg.burned) {
-    const peopleStr = msg.maxReads === 1 ? '1 person' : `${msg.maxReads} people`;
+  if (meta.burned) {
+    const peopleStr = meta.maxReads === 1 ? '1 person' : `${meta.maxReads} people`;
     return NextResponse.json(
       { error: `Too late, the message was already burned by ${peopleStr}` },
       { status: 410 }
@@ -34,45 +46,47 @@ export async function POST(request, { params }) {
   const body = await request.json();
   const { passwordHash } = body;
 
-  if (!msg.hasPassword) {
+  if (!meta.hasPassword) {
     return NextResponse.json(
       { error: 'Message is not password protected' },
       { status: 400 }
     );
   }
 
-  if (passwordHash !== msg.passwordHash) {
+  // Fetch password hash separately (not included in meta for defense in depth)
+  const storedHash = await getPasswordHash(id);
+
+  // Constant-time comparison to prevent timing side-channel attacks
+  if (!storedHash || !timingSafeEqual(passwordHash, storedHash)) {
+    // Record failed attempt — auto-burns after 5 failures
+    const { burned, attemptsLeft } = await recordFailedAttempt(id);
+    if (burned) {
+      return NextResponse.json(
+        { error: 'Too many failed attempts. Message has been destroyed.' },
+        { status: 410 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Incorrect password' },
+      { error: `Incorrect password. ${attemptsLeft} attempt(s) remaining.` },
       { status: 403 }
     );
   }
 
-  const response = {
-    ciphertext: msg.ciphertext,
-    iv: msg.iv,
-    audio: msg.audio || null,
-    burnTime: msg.burnTime ?? 30,
-    createdAt: msg.createdAt,
-  };
+  // Password correct — atomic claim-first, read-second
+  const result = await claimMessageRead(id);
 
-  const currentReadCount = await claimMessageRead(id, msg.maxReads);
-  
-  if (currentReadCount === null) {
-    const peopleStr = msg.maxReads === 1 ? '1 person' : `${msg.maxReads} people`;
+  if (result === null) {
+    const peopleStr = meta.maxReads === 1 ? '1 person' : `${meta.maxReads} people`;
     return NextResponse.json(
       { error: `Too late, the message was already burned by ${peopleStr}` },
       { status: 410 }
     );
   }
 
-  response.currentRead = currentReadCount;
-  response.maxReads = msg.maxReads;
-
-
-  if (msg.telegramId) {
-    await sendTelegramNotification(msg.telegramId, request, id);
+  // Send notification (non-blocking)
+  if (meta.telegramId) {
+    sendTelegramNotification(meta.telegramId, request, id).catch(() => {});
   }
 
-  return NextResponse.json(response);
+  return NextResponse.json(result);
 }

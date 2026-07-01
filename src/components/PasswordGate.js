@@ -3,6 +3,18 @@
 import { useState } from 'react';
 import styles from './PasswordGate.module.css';
 
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  return bytes;
+}
+
+function arrayToHex(arr) {
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export default function PasswordGate({ messageId, passwordSalt, onUnlock, onGone }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -10,10 +22,20 @@ export default function PasswordGate({ messageId, passwordSalt, onUnlock, onGone
 
   async function hashPassword(pwd) {
     const salt = passwordSalt || '';
-    const encoded = new TextEncoder().encode(salt + pwd);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(pwd),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const saltBytes = hexToBytes(salt);
+    const derived = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial,
+      256
+    );
+    return arrayToHex(new Uint8Array(derived));
   }
 
   async function handleSubmit(e) {
@@ -33,7 +55,12 @@ export default function PasswordGate({ messageId, passwordSalt, onUnlock, onGone
 
       if (!res.ok) {
         if (res.status === 403) {
-          setError('Incorrect password. Try again.');
+          try {
+            const data = await res.json();
+            setError(data.error || 'Incorrect password. Try again.');
+          } catch {
+            setError('Incorrect password. Try again.');
+          }
         } else if (res.status === 410 || res.status === 404) {
           try {
             const data = await res.json();

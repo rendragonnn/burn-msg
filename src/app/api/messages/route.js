@@ -4,9 +4,14 @@ import { createMessage } from '@/lib/store';
 import { EXPIRY_OPTIONS, ID_LENGTH, MAX_PAYLOAD_SIZE } from '@/lib/constants';
 import { rateLimit } from '@/lib/rateLimit';
 
+// Validation helpers
+const isValidBase64 = (str) => /^[A-Za-z0-9+/]+=*$/.test(str);
+const isValidHex32 = (str) => /^[0-9a-f]{32}$/.test(str);
+const isNumericString = (str) => /^\d+$/.test(str);
+
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const { allowed, retryAfter } = rateLimit(ip, 20, 60_000);
+  const { allowed, retryAfter } = await rateLimit(ip, 20, 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: `Too many requests. Try again in ${retryAfter}s.` },
@@ -29,6 +34,32 @@ export async function POST(request) {
       return NextResponse.json(
         { error: 'Payload too large' },
         { status: 413 }
+      );
+    }
+
+    // Validate ciphertext and iv are valid base64
+    if (!isValidBase64(ciphertext) || !isValidBase64(iv)) {
+      return NextResponse.json(
+        { error: 'Invalid ciphertext or iv format (must be base64)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate passwordSalt — must be 32-char hex string or absent
+    const passwordSalt = body.passwordSalt || null;
+    if (passwordSalt && !isValidHex32(passwordSalt)) {
+      return NextResponse.json(
+        { error: 'Invalid passwordSalt format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate telegramId — must be numeric string or absent
+    const validatedTelegramId = telegramId ? String(telegramId).trim() : null;
+    if (validatedTelegramId && !isNumericString(validatedTelegramId)) {
+      return NextResponse.json(
+        { error: 'Invalid telegramId format' },
+        { status: 400 }
       );
     }
 
@@ -66,19 +97,19 @@ export async function POST(request) {
       iv,
       hasPassword: !!passwordHash,
       passwordHash: passwordHash || null,
-      passwordSalt: body.passwordSalt || null,
+      passwordSalt,
       expiresAt,
       burnTime: finalBurnTime,
       maxReads: finalMaxReads,
       audio: audio || null,
-      telegramId: telegramId || null
+      telegramId: validatedTelegramId
     });
 
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/messages] Error:', error);
     return NextResponse.json(
-      { error: error.message, stack: error.stack },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
